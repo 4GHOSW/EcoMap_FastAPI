@@ -73,11 +73,12 @@
 
             // 주소를 좌표로 변환하는 함수
             async function getCoordinates(address) {
+                console.log(address);
                 return new Promise((resolve, reject) => {
                     naver.maps.Service.geocode({
                         query: address
                     }, function(status, response) {
-                        console.log('Geocode response:', response);
+                        console.log('Geocode response:', status, response);
                         if (status !== naver.maps.Service.Status.OK) {
                             return reject('좌표 변환 실패: ' + status);
                         }
