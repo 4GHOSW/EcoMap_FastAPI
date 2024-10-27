@@ -1,23 +1,92 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>간단한 지도 표시하기</title>
-    <script type="text/javascript">
+    <script>
         const urlParams = new URLSearchParams(window.location.search);
         const clientId = urlParams.get('client_id');
         const clientSecret = urlParams.get('client_secret');
+        
         if (!clientId || !clientSecret) {
             alert('NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET가 필요합니다.');
             throw new Error('NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET가 필요합니다.');
         }
+
+        // NAVER Maps API v3와 Geocoder 서브 모듈 로드
+        function loadNaverMapsApi() {
+            const script = document.createElement('script');
+            script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${clientId}&submodules=geocoder`;
+            script.async = true;
+            script.onload = initMap; // 스크립트가 로드된 후 initMap 호출
+            document.head.appendChild(script);
+        }
+
+        function initMap() {
+            const startLat = 37.3595704; // 기본 출발지 위도
+            const startLng = 127.105399; // 기본 출발지 경도
+
+            var mapOptions = {
+                center: new naver.maps.LatLng(startLat, startLng),
+                zoom: 10
+            };
+
+            var map = new naver.maps.Map('map', mapOptions);
+
+            // 출발지 마커 추가
+            var startMarker = new naver.maps.Marker({
+                position: new naver.maps.LatLng(startLat, startLng),
+                map: map,
+                title: '출발지'
+            });
+
+            // 버튼 클릭 이벤트 리스너
+            document.getElementById('submitBtn').addEventListener('click', async function() {
+                const startLocation = document.getElementById('start').value;
+                const destinationLocation = document.getElementById('destination').value;
+
+                // 출발지 좌표 요청
+                const startCoordinates = await getCoordinates(startLocation);
+                // 목적지 좌표 요청
+                const destCoordinates = await getCoordinates(destinationLocation);
+
+                // 출발지 마커 업데이트
+                if (startCoordinates.lat && startCoordinates.lng) {
+                    startMarker.setPosition(new naver.maps.LatLng(startCoordinates.lat, startCoordinates.lng));
+                    map.setCenter(startMarker.getPosition());
+                }
+                // 목적지 마커 추가
+                if (destCoordinates.lat && destCoordinates.lng) {
+                    addMarker(destCoordinates.lat, destCoordinates.lng, '목적지');
+                }
+            });
+
+            // 마커 추가 함수
+            function addMarker(lat, lng, title) {
+                new naver.maps.Marker({
+                    position: new naver.maps.LatLng(lat, lng),
+                    map: map,
+                    title: title
+                });
+            }
+
+            // FastAPI를 통해 좌표를 가져오는 함수
+            async function getCoordinates(address) {
+                const response = await fetch(`/get_coordinates?query=${encodeURIComponent(address)}&client_id=${clientId}&client_secret=${clientSecret}`);
+                if (response.ok) {
+                    return await response.json();
+                }
+                return { lat: null, lng: null };
+            }
+        }
+
+        // 페이지가 로드될 때 NAVER Maps API 로드
+        window.onload = loadNaverMapsApi;
     </script>
-    <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId={{ client_id }}&submodules=geocoder"></script>
     <style>
         #map {
-            width: 400px;
+            width: 100%;
             height: 400px;
         }
         #controls {
@@ -37,62 +106,5 @@
 
 <div id="map"></div>
 
-<script>
-var startLat = {{ lat }}; // FastAPI로부터 전달받은 출발지 위도
-var startLng = {{ lng }}; // FastAPI로부터 전달받은 출발지 경도
-
-var mapOptions = {
-    center: new naver.maps.LatLng(startLat, startLng),
-    zoom: 10
-};
-
-var map = new naver.maps.Map('map', mapOptions);
-
-// 출발지 마커 추가
-var startMarker = new naver.maps.Marker({
-    position: new naver.maps.LatLng(startLat, startLng),
-    map: map,
-    title: '출발지'
-});
-
-// 버튼 클릭 이벤트 리스너
-document.getElementById('submitBtn').addEventListener('click', function() {
-    const startLocation = document.getElementById('start').value;
-    const destinationLocation = document.getElementById('destination').value;
-
-    // 출발지 좌표 요청
-    getCoordinates(startLocation, 'start');
-    // 목적지 좌표 요청
-    getCoordinates(destinationLocation, 'destination');
-});
-
-// 좌표 요청 함수
-function getCoordinates(address, type) {
-    naver.maps.Service.geocode({ query: address }, function(status, response) {
-        if (status !== naver.maps.Service.Status.OK) {
-            return alert('주소를 찾을 수 없습니다.');
-        }
-
-        const result = response.v2.addresses[0];
-        if (type === 'start') {
-            startLat = result.y;
-            startLng = result.x;
-            startMarker.setPosition(new naver.maps.LatLng(startLat, startLng));
-            map.setCenter(startMarker.getPosition());
-        } else if (type === 'destination') {
-            addMarker(result.y, result.x, '목적지');
-        }
-    });
-}
-
-// 마커 추가 함수
-function addMarker(lat, lng, title) {
-    new naver.maps.Marker({
-        position: new naver.maps.LatLng(lat, lng),
-        map: map,
-        title: title
-    });
-}
-</script>
 </body>
 </html>
