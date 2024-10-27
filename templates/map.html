@@ -35,15 +35,7 @@
             var map = new naver.maps.Map('map', mapOptions);
 
             // 출발지 마커 추가
-            var startMarker = new naver.maps.Marker({
-                position: new naver.maps.LatLng(startLat, startLng),
-                map: map,
-                title: '출발지',
-                icon: {
-                        url: 'img/start.png', // 기본 아이콘 URL
-                        scaledSize: new naver.maps.Size(30, 30) // 아이콘 크기 조정
-                    }
-            });
+            var startMarker = addMarker(startLat, startLng, '출발지', 'img/start.png');
 
             // 버튼 클릭 이벤트 리스너
             document.getElementById('submitBtn').addEventListener('click', async function() {
@@ -68,7 +60,7 @@
 
             // 마커 추가 함수
             function addMarker(lat, lng, title, iconUrl) {
-                new naver.maps.Marker({
+                var marker = new naver.maps.Marker({
                     position: new naver.maps.LatLng(lat, lng),
                     map: map,
                     title: title,
@@ -77,6 +69,7 @@
                         scaledSize: new naver.maps.Size(30, 30) // 아이콘 크기 조정
                     }
                 });
+                return marker;
             }
 
             // 주소를 좌표로 변환하는 함수
