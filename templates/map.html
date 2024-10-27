@@ -47,15 +47,19 @@
                 // 목적지 좌표 요청
                 const destCoordinates = await getCoordinates(destinationLocation);
 
-                // 출발지 마커 업데이트
-                if (startCoordinates.lat && startCoordinates.lng) {
+                // 목적지 좌표가 유효할 때
+                if (startCoordinates.lat && startCoordinates.lng && destCoordinates.lat && destCoordinates.lng) {
+                  // 출발지 마커 위치 업데이트
                     startMarker.setPosition(new naver.maps.LatLng(startCoordinates.lat, startCoordinates.lng));
                     startMarker.setMap(map); // 지도에 마커 추가
-                    map.setCenter(startMarker.getPosition());
-                }
-                // 목적지 마커 추가
-                if (destCoordinates.lat && destCoordinates.lng) {
-                    addMarker(destCoordinates.lat, destCoordinates.lng, '목적지', '/img/stop.png', 30); // 목적지 마커 아이콘 변경
+
+                    var stopMarker = addMarker(destCoordinates.lat, destCoordinates.lng, '목적지', '/img/stop.png', 30); // 목적지 마커 아이콘 변경
+                    stopMarker.setMap(map); // 목적지 마커 지도에 추가
+
+                    // 출발지와 목적지의 중간 위치로 지도를 이동
+                    var centerLat = (startMarker.getPosition().lat() + stopMarker.getPosition().lat()) / 2;
+                    var centerLng = (startMarker.getPosition().lng() + stopMarker.getPosition().lng()) / 2;
+                    map.setCenter(new naver.maps.LatLng(centerLat, centerLng));
                 }
             });
 
