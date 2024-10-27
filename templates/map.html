@@ -71,17 +71,21 @@
                 });
             }
 
-            // Geocoder를 통해 좌표를 가져오는 함수
+            // 주소를 좌표로 변환하는 함수
             async function getCoordinates(address) {
                 return new Promise((resolve, reject) => {
-                    const geocoder = new naver.maps.Geocoder();
-                    geocoder.geocode(address, (status, response) => {
-                        if (status === naver.maps.Service.Status.OK) {
-                            const result = response.v2.addresses[0];
-                            resolve({ lat: result.y, lng: result.x });
-                        } else {
-                            reject(new Error('Geocoding failed'));
+                    naver.maps.Service.geocode({
+                        query: address
+                    }, function(status, response) {
+                        if (status !== naver.maps.Service.Status.OK) {
+                            return reject('좌표 변환 실패');
                         }
+                        const result = response.v2;
+                        const firstAddress = result.addresses[0];
+                        resolve({
+                            lat: parseFloat(firstAddress.y),
+                            lng: parseFloat(firstAddress.x)
+                        });
                     });
                 });
             }
@@ -92,7 +96,7 @@
     </script>
     <style>
         #map {
-            width: 400px;
+            width: 100%;
             height: 400px;
         }
         #controls {
