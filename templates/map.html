@@ -8,12 +8,13 @@
     <script type="text/javascript">
         const urlParams = new URLSearchParams(window.location.search);
         const clientId = urlParams.get('client_id');
-        if (!clientId) {
-            alert('NAVER_CLIENT_ID가 필요합니다.');
-            throw new Error('NAVER_CLIENT_ID가 필요합니다.');
+        const clientSecret = urlParams.get('client_secret');
+        if (!clientId || !clientSecret) {
+            alert('NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET가 필요합니다.');
+            throw new Error('NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET가 필요합니다.');
         }
     </script>
-    <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId={{ client_id }}"></script>
+    <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId={{ client_id }}&submodules=geocoder"></script>
     <style>
         #map {
             width: 400px;
@@ -55,25 +56,34 @@ var startMarker = new naver.maps.Marker({
 });
 
 // 버튼 클릭 이벤트 리스너
-document.getElementById('submitBtn').addEventListener('click', async function() {
+document.getElementById('submitBtn').addEventListener('click', function() {
     const startLocation = document.getElementById('start').value;
     const destinationLocation = document.getElementById('destination').value;
 
     // 출발지 좌표 요청
-    const startCoordinates = await getCoordinates(startLocation);
+    getCoordinates(startLocation, 'start');
     // 목적지 좌표 요청
-    const destCoordinates = await getCoordinates(destinationLocation);
-
-    // 출발지 마커 업데이트
-    if (startCoordinates.lat && startCoordinates.lng) {
-        startMarker.setPosition(new naver.maps.LatLng(startCoordinates.lat, startCoordinates.lng));
-        map.setCenter(startMarker.getPosition());
-    }
-    // 목적지 마커 추가
-    if (destCoordinates.lat && destCoordinates.lng) {
-        addMarker(destCoordinates.lat, destCoordinates.lng, '목적지');
-    }
+    getCoordinates(destinationLocation, 'destination');
 });
+
+// 좌표 요청 함수
+function getCoordinates(address, type) {
+    naver.maps.Service.geocode({ query: address }, function(status, response) {
+        if (status !== naver.maps.Service.Status.OK) {
+            return alert('주소를 찾을 수 없습니다.');
+        }
+
+        const result = response.v2.addresses[0];
+        if (type === 'start') {
+            startLat = result.y;
+            startLng = result.x;
+            startMarker.setPosition(new naver.maps.LatLng(startLat, startLng));
+            map.setCenter(startMarker.getPosition());
+        } else if (type === 'destination') {
+            addMarker(result.y, result.x, '목적지');
+        }
+    });
+}
 
 // 마커 추가 함수
 function addMarker(lat, lng, title) {
@@ -82,15 +92,6 @@ function addMarker(lat, lng, title) {
         map: map,
         title: title
     });
-}
-
-// FastAPI를 통해 좌표를 가져오는 함수
-async function getCoordinates(address) {
-    const response = await fetch(`/get_coordinates?query=${encodeURIComponent(address)}&client_id=${clientId}`);
-    if (response.ok) {
-        return await response.json();
-    }
-    return { lat: null, lng: null };
 }
 </script>
 </body>
