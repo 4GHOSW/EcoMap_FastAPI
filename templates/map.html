@@ -78,19 +78,19 @@
                     query: address
                 }, function(status, response) {
                     if (status !== naver.maps.Service.Status.OK) {
-                            return alert(`API 서버 에러!`);
-                        }
-                        const result = response.v2;
-                        console.log(result);
-                        if (result && result.addresses && result.addresses.length > 0) {
-                            const firstAddress = result.addresses[0];
-                            return {
-                                lat: parseFloat(firstAddress.y),
-                                lng: parseFloat(firstAddress.x)
-                            };
-                        } else {
-                            return alert(`${address} 주소를 찾을 수 없습니다!`);
-                        }
+                        return alert(`API 서버 에러!`);
+                    }
+                    const result = response.v2;
+                    console.log(result);
+                    if (result && result.addresses && result.addresses.length > 0) {
+                        const firstAddress = result.addresses[0];
+                        return {
+                            lat: parseFloat(firstAddress.y),
+                            lng: parseFloat(firstAddress.x)
+                        };
+                    } else {
+                        return alert(`${address} 주소를 찾을 수 없습니다!`);
+                    }
                 });
             }
         }
