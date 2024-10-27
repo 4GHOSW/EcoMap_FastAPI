@@ -81,6 +81,7 @@
                             return alert(`API 서버 에러!`);
                         }
                         const result = response.v2;
+                        console.log(result);
                         if (result && result.addresses && result.addresses.length > 0) {
                             const firstAddress = result.addresses[0];
                             return {
