@@ -71,13 +71,19 @@
                 });
             }
 
-            // FastAPI를 통해 좌표를 가져오는 함수
+            // Geocoder를 통해 좌표를 가져오는 함수
             async function getCoordinates(address) {
-                const response = await fetch(`/get_coordinates?query=${encodeURIComponent(address)}&client_id=${clientId}&client_secret=${clientSecret}`);
-                if (response.ok) {
-                    return await response.json();
-                }
-                return { lat: null, lng: null };
+                return new Promise((resolve, reject) => {
+                    const geocoder = new naver.maps.Geocoder();
+                    geocoder.geocode(address, (status, response) => {
+                        if (status === naver.maps.Service.Status.OK) {
+                            const result = response.v2.addresses[0];
+                            resolve({ lat: result.y, lng: result.x });
+                        } else {
+                            reject(new Error('Geocoding failed'));
+                        }
+                    });
+                });
             }
         }
 
@@ -86,7 +92,7 @@
     </script>
     <style>
         #map {
-            width: 100%;
+            width: 400px;
             height: 400px;
         }
         #controls {
