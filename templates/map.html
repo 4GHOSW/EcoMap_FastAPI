@@ -78,14 +78,18 @@
                         query: address
                     }, function(status, response) {
                         if (status !== naver.maps.Service.Status.OK) {
-                            return reject('좌표 변환 실패');
+                            return reject('좌표 변환 실패: ' + status);
                         }
                         const result = response.v2;
-                        const firstAddress = result.addresses[0];
-                        resolve({
-                            lat: parseFloat(firstAddress.y),
-                            lng: parseFloat(firstAddress.x)
-                        });
+                        if (result && result.addresses && result.addresses.length > 0) {
+                            const firstAddress = result.addresses[0];
+                            resolve({
+                                lat: parseFloat(firstAddress.y),
+                                lng: parseFloat(firstAddress.x)
+                            });
+                        } else {
+                            reject('주소를 찾을 수 없습니다.');
+                        }
                     });
                 });
             }
