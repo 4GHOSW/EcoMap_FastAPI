@@ -1,0 +1,3 @@
+#!/bin/bash
+ps -ef | grep gunicorn | grep 8000 >> pid.txt
+python3 remove_pid_app.py
