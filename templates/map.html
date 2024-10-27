@@ -23,6 +23,8 @@
             document.head.appendChild(script);
         }
 
+        let markers = []; // 마커 배열 선언
+
         function initMap() {
             const startLat = 37.3595704; // 기본 출발지 위도
             const startLng = 127.105399; // 기본 출발지 경도
@@ -36,6 +38,7 @@
 
             // 출발지 마커 추가
             var startMarker = addMarker(startLat, startLng, '출발지', '/img/start.png', 25);
+            markers.push(startMarker); // 시작 마커를 마커 배열에 추가
 
             // 버튼 클릭 이벤트 리스너
             document.getElementById('submitBtn').addEventListener('click', handleSearch);
@@ -54,6 +57,12 @@
                 const startLocation = document.getElementById('start').value;
                 const destinationLocation = document.getElementById('destination').value;
 
+                // 마커를 모두 제거
+                markers.forEach(marker => {
+                    marker.setMap(null);
+                });
+                markers = []; // 배열 초기화
+
                 // 출발지 좌표 요청
                 getCoordinates(startLocation).then(startCoordinates => {
                     // 목적지 좌표 요청
@@ -63,9 +72,11 @@
                             // 출발지 마커 위치 업데이트
                             startMarker.setPosition(new naver.maps.LatLng(startCoordinates.lat, startCoordinates.lng));
                             startMarker.setMap(map); // 지도에 마커 추가
+                            markers.push(startMarker); // 시작 마커를 마커 배열에 추가
 
                             var stopMarker = addMarker(destCoordinates.lat, destCoordinates.lng, '목적지', '/img/stop.png', 30); // 목적지 마커 아이콘 변경
                             stopMarker.setMap(map); // 목적지 마커 지도에 추가
+                            markers.push(stopMarker); // 목적지 마커를 마커 배열에 추가
 
                             // 출발지와 목적지의 위치를 포함하는 경계 설정
                             var bounds = new naver.maps.LatLngBounds();
@@ -223,4 +234,5 @@
 
 </body>
 </html>
+
 
