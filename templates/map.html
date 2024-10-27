@@ -56,10 +56,11 @@
                     var stopMarker = addMarker(destCoordinates.lat, destCoordinates.lng, '목적지', '/img/stop.png', 30); // 목적지 마커 아이콘 변경
                     stopMarker.setMap(map); // 목적지 마커 지도에 추가
 
-                    // 출발지와 목적지의 중간 위치로 지도를 이동
-                    var centerLat = (startMarker.getPosition().lat() + stopMarker.getPosition().lat()) / 2;
-                    var centerLng = (startMarker.getPosition().lng() + stopMarker.getPosition().lng()) / 2;
-                    map.setCenter(new naver.maps.LatLng(centerLat, centerLng));
+                    // 출발지와 목적지의 위치를 포함하는 경계 설정
+                    var bounds = new naver.maps.LatLngBounds();
+                    bounds.extend(startMarker.getPosition());
+                    bounds.extend(stopMarker.getPosition());
+                    map.fitBounds(bounds); // 경계에 맞춰 지도 자동 줌
                 }
             });
 
