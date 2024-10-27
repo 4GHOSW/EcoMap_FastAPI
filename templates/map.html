@@ -38,31 +38,53 @@
             var startMarker = addMarker(startLat, startLng, '출발지', '/img/start.png', 25);
 
             // 버튼 클릭 이벤트 리스너
-            document.getElementById('submitBtn').addEventListener('click', async function() {
+            document.getElementById('submitBtn').addEventListener('click', handleSearch);
+            document.getElementById('start').addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    handleSearch();
+                }
+            });
+            document.getElementById('destination').addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    handleSearch();
+                }
+            });
+
+            function handleSearch() {
                 const startLocation = document.getElementById('start').value;
                 const destinationLocation = document.getElementById('destination').value;
 
                 // 출발지 좌표 요청
-                const startCoordinates = await getCoordinates(startLocation);
-                // 목적지 좌표 요청
-                const destCoordinates = await getCoordinates(destinationLocation);
+                getCoordinates(startLocation).then(startCoordinates => {
+                    // 목적지 좌표 요청
+                    return getCoordinates(destinationLocation).then(destCoordinates => {
+                        // 목적지 좌표가 유효할 때
+                        if (startCoordinates.lat && startCoordinates.lng && destCoordinates.lat && destCoordinates.lng) {
+                            // 출발지 마커 위치 업데이트
+                            startMarker.setPosition(new naver.maps.LatLng(startCoordinates.lat, startCoordinates.lng));
+                            startMarker.setMap(map); // 지도에 마커 추가
 
-                // 목적지 좌표가 유효할 때
-                if (startCoordinates.lat && startCoordinates.lng && destCoordinates.lat && destCoordinates.lng) {
-                    // 출발지 마커 위치 업데이트
-                    startMarker.setPosition(new naver.maps.LatLng(startCoordinates.lat, startCoordinates.lng));
-                    startMarker.setMap(map); // 지도에 마커 추가
+                            var stopMarker = addMarker(destCoordinates.lat, destCoordinates.lng, '목적지', '/img/stop.png', 30); // 목적지 마커 아이콘 변경
+                            stopMarker.setMap(map); // 목적지 마커 지도에 추가
 
-                    var stopMarker = addMarker(destCoordinates.lat, destCoordinates.lng, '목적지', '/img/stop.png', 30); // 목적지 마커 아이콘 변경
-                    stopMarker.setMap(map); // 목적지 마커 지도에 추가
+                            // 출발지와 목적지의 위치를 포함하는 경계 설정
+                            var bounds = new naver.maps.LatLngBounds();
+                            bounds.extend(startMarker.getPosition());
+                            bounds.extend(stopMarker.getPosition());
+                            map.fitBounds(bounds); // 경계에 맞춰 지도 자동 줌
 
-                    // 출발지와 목적지의 위치를 포함하는 경계 설정
-                    var bounds = new naver.maps.LatLngBounds();
-                    bounds.extend(startMarker.getPosition());
-                    bounds.extend(stopMarker.getPosition());
-                    map.fitBounds(bounds); // 경계에 맞춰 지도 자동 줌
-                }
-            });
+                            // 버튼 클릭 시 귀여운 이펙트
+                            const button = document.getElementById('submitBtn');
+                            button.classList.add('clicked');
+                            setTimeout(() => {
+                                button.classList.remove('clicked');
+                            }, 300);
+                        }
+                    });
+                }).catch(err => {
+                    alert(err);
+                });
+            }
 
             // 마커 추가 함수
             function addMarker(lat, lng, title, iconUrl, icoSize) {
@@ -112,6 +134,7 @@
             font-family: 'Arial', sans-serif;
             background-color: #f0f4f8;
             color: #333;
+            text-align: center; /* 중앙 정렬 */
         }
 
         #map {
@@ -119,7 +142,7 @@
             height: 400px;
             border-radius: 10px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            margin-top: 10px;
+            margin: 10px auto; /* 마진 자동으로 가운데 정렬 */
         }
 
         #controls {
@@ -128,6 +151,8 @@
             background-color: #ffffff;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: inline-block; /* 중앙 정렬을 위해 inline-block 사용 */
+            position: relative; /* 버튼 위치를 조정하기 위해 상대 위치 지정 */
         }
 
         label {
@@ -168,9 +193,25 @@
         button:active {
             background-color: #003d7a;
         }
+
+        /* 클릭 시 귀여운 이펙트 */
+        .clicked {
+            transform: scale(1.1); /* 버튼 크기 확대 */
+            transition: transform 0.2s ease; /* 부드러운 전환 */
+        }
+
+        /* 모바일 화면에서 입력란과 버튼의 크기 조정 */
+        @media (max-width: 768px) {
+            input[type="text"], button {
+                width: calc(100% - 22px);
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
+
+<div id="map"></div> <!-- 지도를 입력란보다 위에 배치 -->
 
 <div id="controls">
     <label for="start">출발지:</label>
@@ -180,7 +221,6 @@
     <button id="submitBtn">에코 길찾기</button>
 </div>
 
-<div id="map"></div>
-
 </body>
 </html>
+
