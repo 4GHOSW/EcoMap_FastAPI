@@ -78,7 +78,7 @@
                     query: address
                 }, function(status, response) {
                     if (status !== naver.maps.Service.Status.OK) {
-                            return alert('주소를 찾을 수 없습니다!');
+                            return alert(`API 서버 에러!`);
                         }
                         const result = response.v2;
                         if (result && result.addresses && result.addresses.length > 0) {
@@ -88,7 +88,7 @@
                                 lng: parseFloat(firstAddress.x)
                             };
                         } else {
-                            return alert('주소를 찾을 수 없습니다.');
+                            return alert(`${address} 주소를 찾을 수 없습니다!`);
                         }
                 });
             }
