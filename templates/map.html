@@ -8,7 +8,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const clientId = urlParams.get('client_id');
         const clientSecret = urlParams.get('client_secret');
-        
+
         if (!clientId || !clientSecret) {
             alert('NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET가 필요합니다.');
             throw new Error('NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET가 필요합니다.');
@@ -49,7 +49,7 @@
 
                 // 목적지 좌표가 유효할 때
                 if (startCoordinates.lat && startCoordinates.lng && destCoordinates.lat && destCoordinates.lng) {
-                  // 출발지 마커 위치 업데이트
+                    // 출발지 마커 위치 업데이트
                     startMarker.setPosition(new naver.maps.LatLng(startCoordinates.lat, startCoordinates.lng));
                     startMarker.setMap(map); // 지도에 마커 추가
 
@@ -108,12 +108,65 @@
         window.onload = loadNaverMapsApi;
     </script>
     <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+        }
+
         #map {
             width: 100%;
             height: 400px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            margin-top: 10px;
         }
+
         #controls {
-            margin: 10px;
+            margin: 20px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-top: 5px;
+            border: 2px solid #0078ff;
+            border-radius: 5px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #0056b3;
+            outline: none;
+        }
+
+        button {
+            background-color: #0078ff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:active {
+            background-color: #003d7a;
         }
     </style>
 </head>
