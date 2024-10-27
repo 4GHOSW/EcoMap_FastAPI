@@ -1,28 +1,27 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from fastapi import Request
+import httpx
+import os
 
 app = FastAPI()
-
-# Jinja2 템플릿 설정
 templates = Jinja2Templates(directory="templates")
 
-@app.get("/map/{client_id}/{lat}/{lng}", response_class=HTMLResponse)
-async def get_map(
-    request: Request,
-    client_id: str,  # 클라이언트 ID를 쿼리 파라미터로 받기
-    lat: float,  # 기본값 설정
-    lng: float    # 기본값 설정
-):
-    return templates.TemplateResponse("map.html", {
-        "request": request,
-        "client_id": client_id,
-        "lat": lat,
-        "lng": lng
-    })
+@app.get("/", response_class=HTMLResponse)
+async def get_map(request: Request, client_id: str):
+    return templates.TemplateResponse("map.html", {"request": request, "client_id": client_id})
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+@app.get("/get_coordinates")
+async def get_coordinates(query: str, client_id: str):
+    url = f"https://openapi.map.naver.com/v1/geocode?query={query}&client_id={client_id}"
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        data = response.json()
+        if data["addresses"]:
+            lat = float(data["addresses"][0]["y"])
+            lng = float(data["addresses"][0]["x"])
+            return {"lat": lat, "lng": lng}
+    return {"lat": None, "lng": None}
+
+
 
