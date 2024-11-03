@@ -145,18 +145,28 @@
 
             function searchPubTransPathAJAX(sx, sy, ex, ey) {
                 var xhr = new XMLHttpRequest();
-                //ODsay apiKey 입력
+                // ODsay API 키 입력
                 var url = `https://api.odsay.com/v1/api/searchPubTransPathT?SX=${sx}&SY=${sy}&EX=${ex}&EY=${ey}&apiKey=${odsayAPIKEY}`;
                 xhr.open("GET", url, true);
                 xhr.send();
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState == 4 && xhr.status == 200) {
-                        console.log( JSON.parse(xhr.responseText) ); // <- xhr.responseText 로 결과를 가져올 수 있음
-                        //노선그래픽 데이터 호출
-                        callMapObjApiAJAX((JSON.parse(xhr.responseText))["result"]["path"][0].info.mapObj);
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.result && response.result.path && response.result.path.length > 0) {
+                            console.log(response); // 응답 데이터를 콘솔에 출력
+                            // 노선 그래픽 데이터 호출
+                            callMapObjApiAJAX(response.result.path[0].info.mapObj);
+                        } else {
+                            alert("경로 데이터를 찾을 수 없습니다.");
+                            console.error("Invalid response format:", response);
+                        }
+                    } else if (xhr.readyState == 4) {
+                        alert("ODsay API 호출에 실패했습니다.");
+                        console.error("Error with ODsay API call:", xhr.status, xhr.statusText);
                     }
                 }
             }
+
             
             function callMapObjApiAJAX(mabObj){
                 var xhr = new XMLHttpRequest();
