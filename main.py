@@ -31,7 +31,7 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
         "endY": str(ey),
         "lang": 0,
         "format": "json",
-        "count": 10,
+        "count": 3,
         "searchDttm": today
     }
     headers = {
@@ -58,11 +58,15 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
                         for path_ in path_buf:
                             path_ = path_.split(",")
                             path.append(path_)
+                    velocity = (part_dist / 1000) / (jtem["sectionTime"] / 60 / 60)
+
                     buf.append({
                         "mode": "WALK",
-                        "part_distance": part_dist,
-                        "part_time": jtem["sectionTime"],
-                        "path": path
+                        "part_distance": part_dist / 1000,
+                        "part_time": jtem["sectionTime"] / 60 / 60,
+                        "path": path,
+                        "velocity": velocity,
+                        "CO2": 0,
                     })
                 if "passShape" in jtem:
                     path = []
@@ -70,12 +74,16 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
                     for path_ in path_buf:
                         path_ = path_.split(",")
                         path.append(path_)
-
+                    
+                    velocity = (jtem["distance"] / 1000) / (jtem["sectionTime"] / 60 / 60)
+                    
                     buf.append({
                         "mode": "BUS",
-                        "part_distance": jtem["distance"],
-                        "part_time": jtem["sectionTime"],
-                        "path": path
+                        "part_distance": jtem["distance"] / 1000,
+                        "part_time": jtem["sectionTime"] / 60 / 60,
+                        "path": path,
+                        "velocity": velocity,
+                        "CO2": jtem["distance"] / 1000 * 5054.5880 * velocity ** (-0.4910)
                     })
             result.append(buf)
         
