@@ -37,7 +37,7 @@
     
         let markers = [];
     
-        function initMap() {
+        async function initMap() {
             console.log(naver.maps); // naver.maps가 정의되었는지 확인
             console.log(naver.maps.Service); // naver.maps.Service가 정의되었는지 확인
             const startLat = 37.3595704;
@@ -52,10 +52,10 @@
             var startMarker = addMarker(startLat, startLng, '출발지', '/img/start.png', 25);
             markers.push(startMarker);
     
-            document.getElementById('submitBtn').addEventListener('click', handleSearch);
+            document.getElementById('submitBtn').addEventListener('click', await handleSearch);
             // Enter 키 입력으로도 길찾기 실행
             document.getElementById('start').addEventListener('keydown', (event) => {
-                if (event.key === 'Enter') handleSearch();
+                if (event.key === 'Enter') handleSearch;
             });
             document.getElementById('destination').addEventListener('keydown', (event) => {
                 if (event.key === 'Enter') handleSearch();
