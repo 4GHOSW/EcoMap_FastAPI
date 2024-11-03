@@ -64,8 +64,7 @@
 
                 try {
                     if (!naver.maps || !naver.maps.Service) {
-                        await handleSearch();
-                        // throw new Error('Naver Maps API가 로드되지 않았습니다.');
+                        throw new Error('Naver Maps API가 로드되지 않았습니다.');
                     }
                     const startCoordinates = await getCoordinates(startLocation);
                     const destCoordinates = await getCoordinates(destinationLocation);
