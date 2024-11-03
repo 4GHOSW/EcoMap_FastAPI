@@ -35,7 +35,9 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float):
     }
 
     response = requests.post(url, json=payload, headers=headers)
+    
     try:
+        print(response.text)
         return response.json()
     except Exception:
         return {"status": 500, "message": "SKT API Server Error"}
