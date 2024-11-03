@@ -10,12 +10,14 @@ app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
-async def get_map(request: Request, client_id: str, client_secret: str, skt_apikey: str):
+async def get_map(request: Request, client_id: str, client_secret: str, skt_apikey: str, start: str, end: str):
     return templates.TemplateResponse("map.html", {
         "request": request,
         "client_id": client_id,
         "client_secret": client_secret,
-        "skt_apikey": skt_apikey
+        "skt_apikey": skt_apikey,
+        "start": start,
+        "end": end
     })
 
 @app.get("/routes/carbon/{sx}/{sy}/{ex}/{ey}")

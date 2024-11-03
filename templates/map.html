@@ -12,10 +12,12 @@
         const clientId = urlParams.get('client_id');
         const clientSecret = urlParams.get('client_secret');
         const sktAPIKEY = urlParams.get('skt_apikey');
+        const startPos = urlParams.get('start');
+        const endPos = urlParams.get('end');
     
-        if (!clientId || !clientSecret || !sktAPIKEY) {
-            alert('NAVER_CLIENT_ID, NAVER_CLIENT_SECRET, SKT_API_KEY가 필요합니다.');
-            throw new Error('NAVER_CLIENT_ID, NAVER_CLIENT_SECRET, SKT_API_KEY가 필요합니다.');
+        if (!clientId || !clientSecret || !sktAPIKEY || !startPos || !endPos) {
+            alert('필요한 매개변수(NAVER_CLIENT_ID, NAVER_CLIENT_SECRET, SKT_API_KEY, start, end)가 없습니다.');
+            throw new Error('필요한 매개변수(NAVER_CLIENT_ID, NAVER_CLIENT_SECRET, SKT_API_KEY, start, end)가 없습니다.');
         }
     
         function loadNaverMapsApi() {
@@ -24,7 +26,6 @@
             script.async = true;
 
             script.onload = async function() {
-                // Naver Maps API가 로드된 후 initMap을 호출
                 await initMap();
             };
 
@@ -47,33 +48,22 @@
             };
     
             var map = new naver.maps.Map('map', mapOptions);
-            var startMarker = addMarker(startLat, startLng, '출발지', '/img/start.png', 25);
-            markers.push(startMarker);
     
-            document.getElementById('submitBtn').addEventListener('click', await handleSearch);
-            // Enter 키 입력으로도 길찾기 실행
-            document.getElementById('start').addEventListener('keydown', async (event) => {
-                if (event.key === 'Enter') await handleSearch;
-            });
-            document.getElementById('destination').addEventListener('keydown', async (event) => {
-                if (event.key === 'Enter') await handleSearch();
-            });
+            // 시작과 끝 좌표를 가져와서 길찾기
+            await handleSearch();
     
             async function handleSearch() {
-                const startLocation = document.getElementById('start').value;
-                const destinationLocation = document.getElementById('destination').value;
-
                 markers.forEach(marker => {
                     marker.setMap(null);
                 });
                 markers = [];
 
                 try {
-                    const startCoordinates = await getCoordinates(startLocation);
-                    const destCoordinates = await getCoordinates(destinationLocation);
+                    const startCoordinates = await getCoordinates(startPos);
+                    const destCoordinates = await getCoordinates(endPos);
                     
                     if (startCoordinates.lat && startCoordinates.lng && destCoordinates.lat && destCoordinates.lng) {
-                        startMarker.setPosition(new naver.maps.LatLng(startCoordinates.lat, startCoordinates.lng));
+                        var startMarker = addMarker(startCoordinates.lat, startCoordinates.lng, '출발지', '/img/start.png', 25);
                         startMarker.setMap(map);
                         markers.push(startMarker);
 
@@ -108,8 +98,6 @@
             }
     
             async function getCoordinates(address) {
-                // console.log(naver.maps); // naver.maps가 정의되었는지 확인
-                console.log(naver.maps.Service); // naver.maps.Service가 정의되었는지 확인
                 return new Promise((resolve, reject) => {
                     naver.maps.Service.geocode({
                         query: address
@@ -152,22 +140,18 @@
 
                 const colorScheme = ['#FF0000', '#F0F000', "#F00F00", "#F000F0", "#F0000F", "#0FF000", "#0F0F00", "#0F00F0", "#0F000F", "#00FF00"];
     
-                // 각 경로에 대해 Polyline을 생성하고 클릭 이벤트 추가
                 paths.forEach((path, index) => {
-                    // Polyline을 위한 좌표 배열
                     const coordinates = path.map(segment => 
                         segment.path.map(point => new naver.maps.LatLng(point[1], point[0]))
                     ).flat();
     
-                    // Polyline 생성
                     const polyline = new naver.maps.Polyline({
                         path: coordinates,
-                        strokeColor: colorScheme[index], // 선 색상
-                        strokeWeight: 4, // 선 두께
-                        map: map // Polyline을 그릴 지도
+                        strokeColor: colorScheme[index],
+                        strokeWeight: 4,
+                        map: map
                     });
     
-                    // Polyline 클릭 이벤트
                     naver.maps.Event.addListener(polyline, 'click', () => {
                         alert(`경로 ${index + 1} 클릭!`);
                     });
@@ -256,15 +240,4 @@
       }
   </style>
 </head>
-<body>
-    <div id="controls">
-        <h2>길찾기</h2>
-        <label for="start">출발지:</label>
-        <input type="text" id="start" placeholder="출발지를 입력하세요.">
-        <label for="destination">목적지:</label>
-        <input type="text" id="destination" placeholder="목적지를 입력하세요.">
-        <button id="submitBtn">길찾기</button>
-    </div>
-    <div id="map"></div>
-</body>
 </html>
