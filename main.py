@@ -42,21 +42,36 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
         for item in pre_result:
             buf = []
             for jtem in item["legs"]:
-                path = []
-                for ktem in jtem["steps"]:
-                    path_buf = ktem["linestring"].split()[:-1]
+                if jtem["mode"]=="WALK":
+                    part_dist = 0
+                    path = []
+                    for ktem in jtem["steps"]:
+                        part_dist += ktem["distance"]
+                        path_buf = ktem["linestring"].split()[:-1]
+                        for path_ in path_buf:
+                            path_ = path_.split(",")
+                            if path_ not in path:
+                                path.append(path_)
+                    buf.append({
+                        "mode":"WALK",
+                        "part_distance": part_dist,
+                        "part_time": jtem["sectionTime"],
+                        "path": path
+                    })
+                if jtem["mode"]=="BUS":
+                    path = []
+                    path_buf = ktem["passShape"]["linestring"].split()
                     for path_ in path_buf:
                         path_ = path_.split(",")
-                        if path_ not in path:
-                            path.append(path_)
-                buf.append({
-                    "mode": jtem["mode"],
-                    "part_distance": jtem["distance"],
-                    "part_time": jtem["sectionTime"],
-                    "path": path
-                })
-            result.append(buf)
-            
+                        path.append(path_)
+
+                    buf.append({
+                        "mode":"BUS",
+                        "part_distance": jtem["distance"],
+                        "part_time": jtem["sectionTime"],
+                        "path": path
+                    })
+                    
         return result
     except Exception:
         return {"status": 500, "message": "SKT API Server Error"}
