@@ -11,10 +11,11 @@
         const urlParams = new URLSearchParams(window.location.search);
         const clientId = urlParams.get('client_id');
         const clientSecret = urlParams.get('client_secret');
+        const odsayAPIKEY = urlParams.get('odsay_apikey');
 
-        if (!clientId || !clientSecret) {
-            alert('NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET가 필요합니다.');
-            throw new Error('NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET가 필요합니다.');
+        if (!clientId || !clientSecret || !odsayAPIKEY) {
+            alert('NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET, ODSAY_API_KEY가 필요합니다.');
+            throw new Error('NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET, ODSAY_API_KEY가 필요합니다.');
         }
 
         // NAVER Maps API v3와 Geocoder 서브 모듈 로드
@@ -87,6 +88,9 @@
                             bounds.extend(stopMarker.getPosition());
                             map.fitBounds(bounds); // 경계에 맞춰 지도 자동 줌
 
+                            //길찾기 API 호출
+                            searchPubTransPathAJAX(startCoordinates.lng, startCoordinates.lat, destCoordinates.lng, destCoordinates.lat);
+
                             // 버튼 클릭 시 귀여운 이펙트
                             const button = document.getElementById('submitBtn');
                             button.classList.add('clicked');
@@ -138,7 +142,82 @@
                     });
                 });
             }
-        }
+
+            function searchPubTransPathAJAX(sx, sy, ex, ey) {
+                var xhr = new XMLHttpRequest();
+                //ODsay apiKey 입력
+                var url = "https://api.odsay.com/v1/api/searchPubTransPathT?SX="+sx+"&SY="+sy+"&EX="+ex+"&EY="+ey+"&apiKey="+odsayAPIKEY;
+                xhr.open("GET", url, true);
+                xhr.send();
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                    console.log( JSON.parse(xhr.responseText) ); // <- xhr.responseText 로 결과를 가져올 수 있음
+                    //노선그래픽 데이터 호출
+                    callMapObjApiAJAX((JSON.parse(xhr.responseText))["result"]["path"][0].info.mapObj);
+                    }
+                }
+            }
+            
+            function callMapObjApiAJAX(mabObj){
+                var xhr = new XMLHttpRequest();
+                //ODsay apiKey 입력
+                var url = "https://api.odsay.com/v1/api/loadLane?mapObject=0:0@"+mabObj+"&apiKey="+odsayAPIKEY;
+                xhr.open("GET", url, true);
+                xhr.send();
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        var resultJsonData = JSON.parse(xhr.responseText);
+                        drawNaverPolyLine(resultJsonData);		// 노선그래픽데이터 지도위 표시
+                        // boundary 데이터가 있을경우, 해당 boundary로 지도이동
+                        if(resultJsonData.result.boundary){
+                            var boundary = new naver.maps.LatLngBounds(
+                                        new naver.maps.LatLng(resultJsonData.result.boundary.top, resultJsonData.result.boundary.left),
+                                        new naver.maps.LatLng(resultJsonData.result.boundary.bottom, resultJsonData.result.boundary.right)
+                                        );
+                            map.panToBounds(boundary);
+                        }
+                    }
+                }
+            }
+            
+            // 노선그래픽 데이터를 이용하여 지도위 폴리라인 그려주는 함수
+            function drawNaverPolyLine(data){
+                var lineArray;
+                
+                for(var i = 0 ; i < data.result.lane.length; i++){
+                  for(var j=0 ; j <data.result.lane[i].section.length; j++){
+                    lineArray = null;
+                    lineArray = new Array();
+                    for(var k=0 ; k < data.result.lane[i].section[j].graphPos.length; k++){
+                      lineArray.push(new naver.maps.LatLng(data.result.lane[i].section[j].graphPos[k].y, data.result.lane[i].section[j].graphPos[k].x));
+                    }
+                    
+                  //지하철결과의 경우 노선에 따른 라인색상 지정하는 부분 (1,2호선의 경우만 예로 들음)
+                    if(data.result.lane[i].type == 1){
+                      var polyline = new naver.maps.Polyline({
+                          map: map,
+                          path: lineArray,
+                          strokeWeight: 3,
+                          strokeColor: '#003499'
+                      });
+                    }else if(data.result.lane[i].type == 2){
+                      var polyline = new naver.maps.Polyline({
+                          map: map,
+                          path: lineArray,
+                          strokeWeight: 3,
+                          strokeColor: '#37b42d'
+                      });
+                    }else{
+                      var polyline = new naver.maps.Polyline({
+                          map: map,
+                          path: lineArray,
+                          strokeWeight: 3
+                      });
+                    }
+                  }
+                }
+              }
+            }
 
         // 페이지가 로드될 때 NAVER Maps API 로드
         window.onload = loadNaverMapsApi;
