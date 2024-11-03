@@ -42,7 +42,7 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
         for item in pre_result:
             buf = []
             for jtem in item["legs"]:
-                if jtem["mode"]=="WALK":
+                if "steps" in jtem:
                     part_dist = 0
                     path = []
                     for ktem in jtem["steps"]:
@@ -58,9 +58,9 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
                         "part_time": jtem["sectionTime"],
                         "path": path
                     })
-                if jtem["mode"]=="BUS":
+                if "passShape" in jtem:
                     path = []
-                    path_buf = ktem["passShape"]["linestring"].split()
+                    path_buf = jtem["passShape"]["linestring"].split()
                     for path_ in path_buf:
                         path_ = path_.split(",")
                         path.append(path_)
@@ -71,7 +71,8 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
                         "part_time": jtem["sectionTime"],
                         "path": path
                     })
-                    
+                result.append(buf)
+                  
         return result
     except Exception:
         return {"status": 500, "message": "SKT API Server Error"}
