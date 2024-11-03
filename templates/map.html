@@ -54,38 +54,39 @@
     
             document.getElementById('submitBtn').addEventListener('click', handleSearch);
     
-            function handleSearch() {
+            async function handleSearch() {
                 const startLocation = document.getElementById('start').value;
                 const destinationLocation = document.getElementById('destination').value;
-    
+
                 markers.forEach(marker => {
                     marker.setMap(null);
                 });
                 markers = [];
-    
-                getCoordinates(startLocation).then(startCoordinates => {
-                    return getCoordinates(destinationLocation).then(destCoordinates => {
-                        if (startCoordinates.lat && startCoordinates.lng && destCoordinates.lat && destCoordinates.lng) {
-                            startMarker.setPosition(new naver.maps.LatLng(startCoordinates.lat, startCoordinates.lng));
-                            startMarker.setMap(map);
-                            markers.push(startMarker);
-    
-                            var stopMarker = addMarker(destCoordinates.lat, destCoordinates.lng, '목적지', '/img/stop.png', 30);
-                            stopMarker.setMap(map);
-                            markers.push(stopMarker);
-    
-                            var bounds = new naver.maps.LatLngBounds();
-                            bounds.extend(startMarker.getPosition());
-                            bounds.extend(stopMarker.getPosition());
-                            map.fitBounds(bounds);
-    
-                            // SKT 대중교통 API 호출
-                            searchCarbonRoutes(startCoordinates.lng, startCoordinates.lat, destCoordinates.lng, destCoordinates.lat);
-                        }
-                    });
-                }).catch(err => {
+
+                try {
+                    const startCoordinates = await getCoordinates(startLocation);
+                    const destCoordinates = await getCoordinates(destinationLocation);
+                    
+                    if (startCoordinates.lat && startCoordinates.lng && destCoordinates.lat && destCoordinates.lng) {
+                        startMarker.setPosition(new naver.maps.LatLng(startCoordinates.lat, startCoordinates.lng));
+                        startMarker.setMap(map);
+                        markers.push(startMarker);
+
+                        var stopMarker = addMarker(destCoordinates.lat, destCoordinates.lng, '목적지', '/img/stop.png', 30);
+                        stopMarker.setMap(map);
+                        markers.push(stopMarker);
+
+                        var bounds = new naver.maps.LatLngBounds();
+                        bounds.extend(startMarker.getPosition());
+                        bounds.extend(stopMarker.getPosition());
+                        map.fitBounds(bounds);
+
+                        // SKT 대중교통 API 호출
+                        await searchCarbonRoutes(startCoordinates.lng, startCoordinates.lat, destCoordinates.lng, destCoordinates.lat);
+                    }
+                } catch (err) {
                     alert(err);
-                });
+                }
             }
     
             function addMarker(lat, lng, title, iconUrl, icoSize) {
@@ -123,22 +124,21 @@
                 });
             }
     
-            function searchCarbonRoutes(startX, startY, endX, endY) {
-                fetch(`/routes/carbon/${startX}/${startY}/${endX}/${endY}?apiKey=${sktAPIKEY}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.routes && data.routes.length > 0) {
-                            console.log(data.routes); // 경로 정보 출력
-                            drawPathOnMap(data.routes); // 경로 그리기
-                        } else {
-                            alert("경로 데이터를 찾을 수 없습니다.");
-                        }
-                    })
-                    .catch(error => {
-                        alert("경로 요청에 실패했습니다.");
-                        console.error("Error:", error);
-                    });
-            }
+            async function searchCarbonRoutes(startX, startY, endX, endY) {
+                try {
+                    const response = await fetch(`/routes/carbon/${startX}/${startY}/${endX}/${endY}?apiKey=${sktAPIKEY}`);
+                    const data = await response.json();
+                    if (data.routes && data.routes.length > 0) {
+                        console.log(data.routes); // 경로 정보 출력
+                        drawPathOnMap(data.routes); // 경로 그리기
+                    } else {
+                        alert("경로 데이터를 찾을 수 없습니다.");
+                    }
+                } catch (error) {
+                    alert("경로 요청에 실패했습니다.");
+                    console.error("Error:", error);
+                }
+}
     
             function drawPathOnMap(paths) {
                 console.log('Drawing paths:', paths);
