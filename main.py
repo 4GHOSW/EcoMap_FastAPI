@@ -31,7 +31,7 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
         "endY": str(ey),
         "lang": 0,
         "format": "json",
-        "count": 3,
+        "count": 10,
         "searchDttm": today
     }
     headers = {
@@ -45,9 +45,10 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
     try:
         pre_result = response.json().get("metaData", {}).get("plan", {}).get("itineraries", [])
         result = []
-        
+        totTimes = []
         for item in pre_result:
             buf = []
+            totTime = 0
             for jtem in item.get("legs", []):
                 if "steps" in jtem:
                     part_dist = 0
@@ -68,6 +69,7 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
                         "velocity": velocity,
                         "CO2": 0,
                     })
+                    totTime += jtem["sectionTime"] / 60 / 60
                 if "passShape" in jtem:
                     path = []
                     path_buf = jtem["passShape"]["linestring"].split()
@@ -85,8 +87,12 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
                         "velocity": velocity,
                         "CO2": jtem["distance"] / 1000 * 5054.5880 * velocity ** (-0.4910)
                     })
+                    totTime += jtem["sectionTime"] / 60 / 60
+            totTimes.append(totTime)
             result.append(buf)
         
+        result = sorted(zip(totTimes, result), key=lambda x:x[0], reverse=False)
+        result = list(map(lambda x:x[1]))
         return {"routes": result}  # Return wrapped in a dict for clarity
     except Exception as e:
         return {"status": 500, "message": str(e)}
