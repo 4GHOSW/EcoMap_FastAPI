@@ -51,14 +51,7 @@
             var startMarker = addMarker(startLat, startLng, '출발지', '/img/start.png', 25);
             markers.push(startMarker);
 
-            document.getElementById('submitBtn').addEventListener('click', handleSearch);
-            // Enter 키 입력으로도 길찾기 실행
-            document.getElementById('start').addEventListener('keydown', (event) => {
-                if (event.key === 'Enter') handleSearch();
-            });
-            document.getElementById('destination').addEventListener('keydown', (event) => {
-                if (event.key === 'Enter') handleSearch();
-            });
+            await handleSearch();
 
             async function handleSearch() {
                 const startLocation = startPos; // API 파라미터에서 받아온 출발지
