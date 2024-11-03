@@ -34,11 +34,12 @@
 
             document.head.appendChild(script);
         }
-
     
         let markers = [];
     
         function initMap() {
+            console.log(naver.maps); // naver.maps가 정의되었는지 확인
+            console.log(naver.maps.Service); // naver.maps.Service가 정의되었는지 확인
             const startLat = 37.3595704;
             const startLng = 127.105399;
     
