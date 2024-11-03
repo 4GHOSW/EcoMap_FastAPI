@@ -72,8 +72,10 @@
                         if (naver.maps && naver.maps.Service) {
                             clearInterval(interval);
                             resolve(true);
+                        } else {
+                            loadNaverMapsApi();
                         }
-                    }, 1000);
+                    }, 5000);
                 });
             }
 
