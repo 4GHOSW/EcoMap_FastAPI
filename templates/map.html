@@ -141,6 +141,8 @@
     
             function drawPathOnMap(paths) {
                 console.log('Drawing paths:', paths);
+
+                const colorScheme = ['#FF0000', '#F0F000', "#F00F00", "#F000F0", "#F0000F", "#0FF000", "#0F0F00", "#0F00F0", "#0F000F", "#00FF00"];
     
                 // 각 경로에 대해 Polyline을 생성하고 클릭 이벤트 추가
                 paths.forEach((path, index) => {
@@ -152,7 +154,7 @@
                     // Polyline 생성
                     const polyline = new naver.maps.Polyline({
                         path: coordinates,
-                        strokeColor: '#FF0000', // 선 색상
+                        strokeColor: colorScheme[index], // 선 색상
                         strokeWeight: 4, // 선 두께
                         map: map // Polyline을 그릴 지도
                     });
