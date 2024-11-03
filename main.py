@@ -92,7 +92,7 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
             result.append(buf)
         
         result = sorted(zip(totTimes, result), key=lambda x:x[0], reverse=False)
-        result = list(map(lambda x:x[1]))
+        result = list(map(lambda x:x[1], result))
         return {"routes": result}  # Return wrapped in a dict for clarity
     except Exception as e:
         return {"status": 500, "message": str(e)}
