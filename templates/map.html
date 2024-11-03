@@ -25,12 +25,16 @@
             script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${clientId}&submodules=geocoder`;
             script.async = true;
 
-            script.onload = async function() {
-                await initMap();
+            script.onload = function() {
+                if (typeof naver !== 'undefined' && naver.maps) {
+                    initMap(); // API가 정상적으로 로드되었을 때 initMap 호출
+                } else {
+                    console.error('Naver Maps API가 로드되지 않았습니다.');
+                }
             };
 
             script.onerror = function() {
-              console.error('Naver Maps API를 로드하는 데 실패했습니다.');
+                console.error('Naver Maps API를 로드하는 데 실패했습니다.');
             };
 
             document.head.appendChild(script);
