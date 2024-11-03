@@ -1,2 +1,2 @@
 #!/bin/bash
-gunicorn -w 2 -k uvicorn.workers.UvicornWorker --timeout 600 --access-logfile ./gunicorn_access.log --error-logfile ./gunicorn_error.log --daemon --bind 0.0.0.0:8000 main:app
+gunicorn -w 2 -k uvicorn.workers.UvicornWorker --timeout 600 --access-logfile ./gunicorn_access.log --error-logfile ./gunicorn_error.log --daemon --bind 0.0.0.0:80 main:app
