@@ -131,8 +131,28 @@
 
             function drawPathOnMap(path) {
                 console.log('Drawing path:', path);
-                // 여기에 path를 기반으로 Polyline을 그리는 로직을 추가합니다.
+                
+                // 지도 인스턴스를 가져옵니다 (예: Naver Map 또는 Google Maps)
+                const map = new naver.maps.Map('map', {
+                    center: new naver.maps.LatLng(path[0].y, path[0].x), // 시작점으로 지도 중심 설정
+                    zoom: 10 // 초기 줌 레벨
+                });
+
+                // Polyline을 위한 좌표 배열
+                const coordinates = path.map(point => new naver.maps.LatLng(point.y, point.x));
+
+                // Polyline 생성
+                const polyline = new naver.maps.Polyline({
+                    path: coordinates,
+                    strokeColor: '#FF0000', // 선 색상
+                    strokeWeight: 4, // 선 두께
+                    map: map // Polyline을 그릴 지도
+                });
+
+                // 지도에 Polyline 추가
+                polyline.setMap(map);
             }
+
         }
 
         window.onload = loadNaverMapsApi;
