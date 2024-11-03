@@ -41,29 +41,43 @@
         async function initMap() {
             const startLat = 37.3595704;
             const startLng = 127.105399;
-    
+
             var mapOptions = {
                 center: new naver.maps.LatLng(startLat, startLng),
                 zoom: 10
             };
-    
+
             var map = new naver.maps.Map('map', mapOptions);
-    
-            // 시작과 끝 좌표를 가져와서 길찾기
-            await handleSearch();
-    
+            var startMarker = addMarker(startLat, startLng, '출발지', '/img/start.png', 25);
+            markers.push(startMarker);
+
+            document.getElementById('submitBtn').addEventListener('click', handleSearch);
+            // Enter 키 입력으로도 길찾기 실행
+            document.getElementById('start').addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') handleSearch();
+            });
+            document.getElementById('destination').addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') handleSearch();
+            });
+
             async function handleSearch() {
+                const startLocation = startPos; // API 파라미터에서 받아온 출발지
+                const destinationLocation = endPos; // API 파라미터에서 받아온 도착지
+
                 markers.forEach(marker => {
                     marker.setMap(null);
                 });
                 markers = [];
 
                 try {
-                    const startCoordinates = await getCoordinates(startPos);
-                    const destCoordinates = await getCoordinates(endPos);
+                    if (!naver.maps || !naver.maps.Service) {
+                        throw new Error('Naver Maps API가 로드되지 않았습니다.');
+                    }
+                    const startCoordinates = await getCoordinates(startLocation);
+                    const destCoordinates = await getCoordinates(destinationLocation);
                     
                     if (startCoordinates.lat && startCoordinates.lng && destCoordinates.lat && destCoordinates.lng) {
-                        var startMarker = addMarker(startCoordinates.lat, startCoordinates.lng, '출발지', '/img/start.png', 25);
+                        startMarker.setPosition(new naver.maps.LatLng(startCoordinates.lat, startCoordinates.lng));
                         startMarker.setMap(map);
                         markers.push(startMarker);
 
@@ -80,24 +94,13 @@
                         await searchCarbonRoutes(startCoordinates.lng, startCoordinates.lat, destCoordinates.lng, destCoordinates.lat);
                     }
                 } catch (err) {
-                    console.error(err);
+                    alert(err);
                 }
             }
     
-            function addMarker(lat, lng, title, iconUrl, icoSize) {
-                var marker = new naver.maps.Marker({
-                    position: new naver.maps.LatLng(lat, lng),
-                    map: map,
-                    title: title,
-                    icon: {
-                        url: iconUrl || '/img/start.png',
-                        scaledSize: new naver.maps.Size(icoSize, icoSize)
-                    }
-                });
-                return marker;
-            }
-    
             async function getCoordinates(address) {
+                console.log(naver.maps); // naver.maps가 정의되었는지 확인
+                console.log(naver.maps.Service); // naver.maps.Service가 정의되었는지 확인
                 return new Promise((resolve, reject) => {
                     naver.maps.Service.geocode({
                         query: address
@@ -119,6 +122,19 @@
                 });
             }
     
+            function addMarker(lat, lng, title, iconUrl, icoSize) {
+                var marker = new naver.maps.Marker({
+                    position: new naver.maps.LatLng(lat, lng),
+                    map: map,
+                    title: title,
+                    icon: {
+                        url: iconUrl || '/img/start.png',
+                        scaledSize: new naver.maps.Size(icoSize, icoSize)
+                    }
+                });
+                return marker;
+            }
+
             async function searchCarbonRoutes(startX, startY, endX, endY) {
                 try {
                     const response = await fetch(`/routes/carbon/${startX}/${startY}/${endX}/${endY}?apiKey=${sktAPIKEY}`);
