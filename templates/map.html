@@ -65,10 +65,10 @@
                     await handleSearch();
                 }
             }
-            console.log(naver.maps.Service);
             async function waitForServiceLoad() {
                 return new Promise((resolve) => {
                     const interval = setInterval(() => {
+                        console.log(naver.maps.Service);
                         if (naver.maps && naver.maps.Service) {
                             clearInterval(interval);
                             resolve(true);
