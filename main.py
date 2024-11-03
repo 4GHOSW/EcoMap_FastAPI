@@ -85,13 +85,12 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
                         "part_time": jtem["sectionTime"] / 60 / 60,
                         "path": path,
                         "velocity": velocity,
-                        "CO2": 0,
+                        "CO2": (jtem["distance"] / 1000) * 5054.5880 * velocity ** (-0.4910)
                     })
                     totTime += jtem["sectionTime"] / 60 / 60
             totTimes.append(totTime)
             result.append(buf)
         
-        result = sorted(zip(totTimes, result), key=lambda x:x[0], reverse=False)
         return {"routes": result}  # Return wrapped in a dict for clarity
     except Exception as e:
         return {"status": 500, "message": str(e)}
