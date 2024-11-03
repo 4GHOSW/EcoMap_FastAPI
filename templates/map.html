@@ -11,7 +11,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const clientId = urlParams.get('client_id');
         const clientSecret = urlParams.get('client_secret');
-        const sktAPIKEY = urlParams.get('skt_apikey'); // SKT API 키 추가
+        const sktAPIKEY = urlParams.get('skt_apikey');
 
         if (!clientId || !clientSecret || !sktAPIKEY) {
             alert('NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET, SKT_API_KEY가 필요합니다.');
@@ -38,21 +38,10 @@
             };
 
             var map = new naver.maps.Map('map', mapOptions);
-
             var startMarker = addMarker(startLat, startLng, '출발지', '/img/start.png', 25);
             markers.push(startMarker);
 
             document.getElementById('submitBtn').addEventListener('click', handleSearch);
-            document.getElementById('start').addEventListener('keypress', function(event) {
-                if (event.key === 'Enter') {
-                    handleSearch();
-                }
-            });
-            document.getElementById('destination').addEventListener('keypress', function(event) {
-                if (event.key === 'Enter') {
-                    handleSearch();
-                }
-            });
 
             function handleSearch() {
                 const startLocation = document.getElementById('start').value;
@@ -80,13 +69,7 @@
                             map.fitBounds(bounds);
 
                             // SKT 대중교통 API 호출
-                            searchPublicTransport(startCoordinates.lng, startCoordinates.lat, destCoordinates.lng, destCoordinates.lat);
-
-                            const button = document.getElementById('submitBtn');
-                            button.classList.add('clicked');
-                            setTimeout(() => {
-                                button.classList.remove('clicked');
-                            }, 300);
+                            searchCarbonRoutes(startCoordinates.lng, startCoordinates.lat, destCoordinates.lng, destCoordinates.lat);
                         }
                     });
                 }).catch(err => {
@@ -129,36 +112,26 @@
                 });
             }
 
-            function searchPublicTransport(sx, sy, ex, ey) {
-                var xhr = new XMLHttpRequest();
-                var url = `https://api.skt.com/public-transport/v1/search?startX=${sx}&startY=${sy}&endX=${ex}&endY=${ey}&key=${encodeURIComponent(sktAPIKEY)}`;
-                xhr.open("GET", url, true);
-                xhr.send();
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState == 4 && xhr.status == 200) {
-                        const response = JSON.parse(xhr.responseText);
-                        if (response.result && response.result.path && response.result.path.length > 0) {
-                            console.log(response);
-                            callMapObjApi(response.result.path[0]); // 전송받은 경로 정보를 전달
+            function searchCarbonRoutes(startX, startY, endX, endY) {
+                fetch(`/routes/carbon/${startX}/${startY}/${endX}/${endY}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.result && data.result.path) {
+                            console.log(data.result.path); // 경로 정보 출력
+                            drawPathOnMap(data.result.path); // 경로 그리기
                         } else {
                             alert("경로 데이터를 찾을 수 없습니다.");
                         }
-                    } else if (xhr.readyState == 4) {
-                        alert("SKT API 호출에 실패했습니다.");
-                        console.error("Error with SKT API call:", xhr.status, xhr.statusText);
-                    }
-                }
-            }
-
-            function callMapObjApi(path) {
-                // TODO: path 정보를 기반으로 선을 지도에 표시하는 로직 추가
-                drawPathOnMap(path);
+                    })
+                    .catch(error => {
+                        alert("경로 요청에 실패했습니다.");
+                        console.error("Error:", error);
+                    });
             }
 
             function drawPathOnMap(path) {
-                // 여기에 path에 포함된 지점들을 사용하여 경로를 지도에 그리는 로직을 추가합니다.
                 console.log('Drawing path:', path);
-                // 예: path.coords 배열을 통해 지도에 Polyline을 그릴 수 있습니다.
+                // 여기에 path를 기반으로 Polyline을 그리는 로직을 추가합니다.
             }
         }
 
@@ -226,33 +199,19 @@
         }
 
         button:active {
-            background-color: #003d7a;
-        }
-
-        .clicked {
-            transform: scale(1.1);
-            transition: transform 0.2s ease;
-        }
-
-        @media (max-width: 768px) {
-            input[type="text"], button {
-                width: calc(100% - 22px);
-                font-size: 14px;
-            }
+            background-color: #004494;
         }
     </style>
 </head>
 <body>
-
-<div id="map"></div>
-
-<div id="controls">
-    <label for="start">출발지:</label>
-    <input type="text" id="start" placeholder="출발지 입력"><br>
-    <label for="destination">목적지:</label>
-    <input type="text" id="destination" placeholder="목적지 입력"><br>
-    <button id="submitBtn">경로 찾기</button>
-</div>
-
+    <div id="controls">
+        <h2>길찾기</h2>
+        <label for="start">출발지:</label>
+        <input type="text" id="start" placeholder="출발지를 입력하세요.">
+        <label for="destination">목적지:</label>
+        <input type="text" id="destination" placeholder="목적지를 입력하세요.">
+        <button id="submitBtn">길찾기</button>
+    </div>
+    <div id="map"></div>
 </body>
 </html>
