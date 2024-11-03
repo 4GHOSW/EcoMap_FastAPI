@@ -116,9 +116,9 @@
                 fetch(`/routes/carbon/${startX}/${startY}/${endX}/${endY}?apiKey=${sktAPIKEY}`)
                     .then(response => response.json())
                     .then(data => {
-                        if (data.result && data.result.path) {
-                            console.log(data.result.path); // 경로 정보 출력
-                            drawPathOnMap(data.result.path); // 경로 그리기
+                        if (data.object) {
+                            console.log(data.object); // 경로 정보 출력
+                            drawPathOnMap(data.object[0]); // 경로 그리기
                         } else {
                             alert("경로 데이터를 찾을 수 없습니다.");
                         }
