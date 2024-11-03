@@ -116,9 +116,9 @@
                 fetch(`/routes/carbon/${startX}/${startY}/${endX}/${endY}?apiKey=${sktAPIKEY}`)
                     .then(response => response.json())
                     .then(data => {
-                        if (data.object) {
-                            console.log(data.object); // 경로 정보 출력
-                            drawPathOnMap(data.object[0]); // 경로 그리기
+                        if (data.legs) {
+                            console.log(data.legs); // 경로 정보 출력
+                            drawPathOnMap(data.legs); // 경로 그리기
                         } else {
                             alert("경로 데이터를 찾을 수 없습니다.");
                         }
@@ -129,30 +129,37 @@
                     });
             }
 
-            function drawPathOnMap(path) {
-                console.log('Drawing path:', path);
+            function drawPathOnMap(paths) {
+                console.log('Drawing paths:', paths);
                 
-                // 지도 인스턴스를 가져옵니다 (예: Naver Map 또는 Google Maps)
+                // 지도 인스턴스를 가져옵니다 (전역 변수로 설정하는 것이 좋습니다)
                 const map = new naver.maps.Map('map', {
-                    center: new naver.maps.LatLng(path[0].y, path[0].x), // 시작점으로 지도 중심 설정
+                    center: new naver.maps.LatLng(paths[0][0].y, paths[0][0].x), // 첫 경로의 시작점으로 지도 중심 설정
                     zoom: 10 // 초기 줌 레벨
                 });
 
-                // Polyline을 위한 좌표 배열
-                const coordinates = path.map(point => new naver.maps.LatLng(point.y, point.x));
+                // 각 경로에 대해 Polyline을 생성하고 클릭 이벤트 추가
+                paths.forEach((path, index) => {
+                    // Polyline을 위한 좌표 배열
+                    const coordinates = path.map(point => new naver.maps.LatLng(point.y, point.x));
 
-                // Polyline 생성
-                const polyline = new naver.maps.Polyline({
-                    path: coordinates,
-                    strokeColor: '#FF0000', // 선 색상
-                    strokeWeight: 4, // 선 두께
-                    map: map // Polyline을 그릴 지도
+                    // Polyline 생성
+                    const polyline = new naver.maps.Polyline({
+                        path: coordinates,
+                        strokeColor: '#FF0000', // 선 색상
+                        strokeWeight: 4, // 선 두께
+                        map: map // Polyline을 그릴 지도
+                    });
+
+                    // Polyline 클릭 이벤트
+                    naver.maps.Event.addListener(polyline, 'click', () => {
+                        alert(`경로 ${index + 1}이 선택되었습니다!`);
+                        // 선택된 경로를 강조 표시하거나 추가 작업을 수행할 수 있습니다.
+                        polyline.setStrokeColor('#00FF00'); // 선택된 경로의 색상 변경
+                        // 이전에 선택된 경로의 색상 복원하는 로직을 추가할 수 있습니다.
+                    });
                 });
-
-                // 지도에 Polyline 추가
-                polyline.setMap(map);
             }
-
         }
 
         window.onload = loadNaverMapsApi;
