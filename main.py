@@ -59,11 +59,14 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
                         for path_ in path_buf:
                             path_ = path_.split(",")
                             path.append(path_)
-
+                    
+                    if part_dist == 0:
+                        continue
+                    
                     if jtem["sectionTime"] > 0:
                         velocity = (part_dist / 1000) / (jtem["sectionTime"] / 60 / 60)
                     else:
-                        velecity = 0.0
+                        velocity = 0.0
 
                     buf.append({
                         "mode": "WALK",
@@ -75,6 +78,8 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
                     })
                     totTime += jtem["sectionTime"] / 60 / 60
                 if "passShape" in jtem:
+                    if jtem["distance"]==0:
+                        continue
                     path = []
                     path_buf = jtem["passShape"]["linestring"].split()
                     for path_ in path_buf:
@@ -104,7 +109,7 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
             result.append(buf)
         
         result_sorted = sorted(zip(totTimes, result), key=lambda x:x[0], reverse=False)
-        result = list(map(lambda x:x[1], result_sorted))
+        result = list(map(lambda x:x[1], result_sorted))[:3]
         return {"routes": result}  # Return wrapped in a dict for clarity
     except Exception as e:
         return {"status": 500, "message": str(e)}
