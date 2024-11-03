@@ -55,7 +55,27 @@
             var startMarker = addMarker(startLat, startLng, '출발지', '/img/start.png', 25);
             markers.push(startMarker);
 
-            await handleSearch();
+            // naver.maps.Service가 로드된 시점에 handleSearch를 호출
+            if (naver.maps && naver.maps.Service) {
+                await handleSearch();
+            } else {
+                // naver.maps.Service가 로드될 때까지 기다림
+                const serviceLoaded = await waitForServiceLoad();
+                if (serviceLoaded) {
+                    await handleSearch();
+                }
+            }
+
+            async function waitForServiceLoad() {
+                return new Promise((resolve) => {
+                    const interval = setInterval(() => {
+                        if (naver.maps && naver.maps.Service) {
+                            clearInterval(interval);
+                            resolve(true);
+                        }
+                    }, 100);
+                });
+            }
 
             async function handleSearch() {
                 const startLocation = startPos; // API 파라미터에서 받아온 출발지
@@ -67,12 +87,9 @@
                 markers = [];
 
                 try {
-                    if (!naver.maps || !naver.maps.Service) {
-                        throw new Error('Naver Maps API가 로드되지 않았습니다.');
-                    }
                     const startCoordinates = await getCoordinates(startLocation);
                     const destCoordinates = await getCoordinates(destinationLocation);
-                    
+
                     if (startCoordinates.lat && startCoordinates.lng && destCoordinates.lat && destCoordinates.lng) {
                         startMarker.setPosition(new naver.maps.LatLng(startCoordinates.lat, startCoordinates.lng));
                         startMarker.setMap(map);
