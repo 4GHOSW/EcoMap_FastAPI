@@ -14,7 +14,7 @@ async def get_map(request: Request, client_id: str, client_secret: str, skt_apik
     return templates.TemplateResponse("map.html", {"request": request, "client_id": client_id, "client_secret": client_secret, "skt_apikey": skt_apikey})
 
 @app.get("/routes/carbon/{sx}/{sy}/{ex}/{ey}")
-async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float):
+async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: str):
     url = "https://apis.openapi.sk.com/transit/routes"
     seoul_tz = timezone('Asia/Seoul')
     today = datetime.datetime.now(seoul_tz).strftime("%Y%m%d%H%M")
@@ -31,7 +31,7 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float):
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
-        "appKey": "I2slsBzzSW2LtdLUdubJyaKKBjrYqgMh4aLusrFZ"
+        "appKey": apiKey
     }
 
     response = requests.post(url, json=payload, headers=headers)
