@@ -85,6 +85,11 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
                         velocity = (jtem["distance"] / 1000) / (jtem["sectionTime"] / 60 / 60)
                     else:
                         velocity = 0.0
+
+                    if velocity > 0:
+                        co2 = (jtem["distance"] / 1000) * 5054.5880 * velocity ** (-0.4910)
+                    else:
+                        co2 = 0.0
                     
                     buf.append({
                         "mode": "BUS",
@@ -92,7 +97,7 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
                         "part_time": jtem["sectionTime"] / 60 / 60,
                         "path": path,
                         "velocity": velocity,
-                        "CO2": (jtem["distance"] / 1000) * 5054.5880 * velocity ** (-0.4910)
+                        "CO2": co2,
                     })
                     totTime += jtem["sectionTime"] / 60 / 60
             totTimes.append(totTime)
