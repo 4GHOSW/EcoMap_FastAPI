@@ -146,7 +146,7 @@
             function searchPubTransPathAJAX(sx, sy, ex, ey) {
                 var xhr = new XMLHttpRequest();
                 //ODsay apiKey 입력
-                var url = "https://api.odsay.com/v1/api/searchPubTransPathT?SX="+sx+"&SY="+sy+"&EX="+ex+"&EY="+ey+"&apiKey="+odsayAPIKEY;
+                var url = `https://api.odsay.com/v1/api/searchPubTransPathT?SX=${sx}&SY=${sy}&EX=${ex}&EY=${ey}&apiKey=${odsayAPIKEY}`;
                 xhr.open("GET", url, true);
                 xhr.send();
                 xhr.onreadystatechange = function() {
@@ -161,7 +161,7 @@
             function callMapObjApiAJAX(mabObj){
                 var xhr = new XMLHttpRequest();
                 //ODsay apiKey 입력
-                var url = "https://api.odsay.com/v1/api/loadLane?mapObject=0:0@"+mabObj+"&apiKey="+odsayAPIKEY;
+                var url = `https://api.odsay.com/v1/api/loadLane?mapObject=0:0@${mabObj}&apiKey=${odsayAPIKEY}`;
                 xhr.open("GET", url, true);
                 xhr.send();
                 xhr.onreadystatechange = function() {
