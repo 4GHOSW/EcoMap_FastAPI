@@ -11,13 +11,19 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 async def get_map(request: Request, client_id: str, client_secret: str, skt_apikey: str):
-    return templates.TemplateResponse("map.html", {"request": request, "client_id": client_id, "client_secret": client_secret, "skt_apikey": skt_apikey})
+    return templates.TemplateResponse("map.html", {
+        "request": request,
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "skt_apikey": skt_apikey
+    })
 
 @app.get("/routes/carbon/{sx}/{sy}/{ex}/{ey}")
 async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: str):
     url = "https://apis.openapi.sk.com/transit/routes"
     seoul_tz = timezone('Asia/Seoul')
     today = datetime.datetime.now(seoul_tz).strftime("%Y%m%d%H%M")
+    
     payload = {
         "startX": str(sx),
         "startY": str(sy),
@@ -37,11 +43,12 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
     response = requests.post(url, json=payload, headers=headers)
     
     try:
-        pre_result = response.json()["metaData"]["plan"]["itineraries"]
+        pre_result = response.json().get("metaData", {}).get("plan", {}).get("itineraries", [])
         result = []
+        
         for item in pre_result:
             buf = []
-            for jtem in item["legs"]:
+            for jtem in item.get("legs", []):
                 if "steps" in jtem:
                     part_dist = 0
                     path = []
@@ -50,10 +57,9 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
                         path_buf = ktem["linestring"].split()[:-1]
                         for path_ in path_buf:
                             path_ = path_.split(",")
-                            if path_ not in path:
-                                path.append(path_)
+                            path.append(path_)
                     buf.append({
-                        "mode":"WALK",
+                        "mode": "WALK",
                         "part_distance": part_dist,
                         "part_time": jtem["sectionTime"],
                         "path": path
@@ -66,16 +72,16 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
                         path.append(path_)
 
                     buf.append({
-                        "mode":"BUS",
+                        "mode": "BUS",
                         "part_distance": jtem["distance"],
                         "part_time": jtem["sectionTime"],
                         "path": path
                     })
-                result.append(buf)
-                  
-        return result
-    except Exception:
-        return {"status": 500, "message": "SKT API Server Error"}
+            result.append(buf)
+        
+        return {"routes": result}  # Return wrapped in a dict for clarity
+    except Exception as e:
+        return {"status": 500, "message": str(e)}
 
 @app.get("/img/{img_fname}")
 async def get_img(img_fname: str):
