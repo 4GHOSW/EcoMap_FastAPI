@@ -146,7 +146,7 @@
             function searchPubTransPathAJAX(sx, sy, ex, ey) {
                 var xhr = new XMLHttpRequest();
                 // ODsay API 키 입력
-                var url = `https://api.odsay.com/v1/api/searchPubTransPathT?SX=${sx}&SY=${sy}&EX=${ex}&EY=${ey}&apiKey=${odsayAPIKEY}`;
+                var url = `https://api.odsay.com/v1/api/searchPubTransPathT?lang=0&SX=${sx}&SY=${sy}&EX=${ex}&EY=${ey}&apiKey=${odsayAPIKEY}`;
                 console.log(url);
                 xhr.open("GET", url, true);
                 xhr.send();
