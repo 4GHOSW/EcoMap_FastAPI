@@ -3,7 +3,7 @@
 <head>
     <link rel="icon" href="img/ecomap.png" type="image/x-icon">
     <link rel="shortcut icon" href="img/ecomap.png" type="image/x-icon">
-    <link rel="apple-touch-icon" href="img/ecomap.png">
+    <link rel="apple-touch-icon" href="img/ecomap.png"> <!-- Apple 장치용 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EcoMap 길찾기</title>
@@ -11,31 +11,39 @@
         const urlParams = new URLSearchParams(window.location.search);
         const clientId = urlParams.get('client_id');
         const clientSecret = urlParams.get('client_secret');
-        const odsayAPIKEY = urlParams.get('odsay_apikey')
 
-        if (!clientId || !clientSecret || !odsayAPIKEY) {
+        if (!clientId || !clientSecret) {
             alert('NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET가 필요합니다.');
             throw new Error('NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET가 필요합니다.');
         }
 
+        // NAVER Maps API v3와 Geocoder 서브 모듈 로드
         function loadNaverMapsApi() {
             const script = document.createElement('script');
             script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${clientId}&submodules=geocoder`;
             script.async = true;
-            script.onload = initMap;
+            script.onload = initMap; // 스크립트가 로드된 후 initMap 호출
             document.head.appendChild(script);
         }
 
-        let markers = [];
+        let markers = []; // 마커 배열 선언
 
         function initMap() {
-            const mapOptions = {
-                center: new naver.maps.LatLng(37.3595704, 127.105399),
+            const startLat = 37.3595704; // 기본 출발지 위도
+            const startLng = 127.105399; // 기본 출발지 경도
+
+            var mapOptions = {
+                center: new naver.maps.LatLng(startLat, startLng),
                 zoom: 10
             };
 
-            const map = new naver.maps.Map('map', mapOptions);
+            var map = new naver.maps.Map('map', mapOptions);
 
+            // 출발지 마커 추가
+            var startMarker = addMarker(startLat, startLng, '출발지', '/img/start.png', 25);
+            markers.push(startMarker); // 시작 마커를 마커 배열에 추가
+
+            // 버튼 클릭 이벤트 리스너
             document.getElementById('submitBtn').addEventListener('click', handleSearch);
             document.getElementById('start').addEventListener('keypress', function(event) {
                 if (event.key === 'Enter') {
@@ -52,118 +60,72 @@
                 const startLocation = document.getElementById('start').value;
                 const destinationLocation = document.getElementById('destination').value;
 
-                markers.forEach(marker => marker.setMap(null));
-                markers = [];
+                // 마커를 모두 제거
+                markers.forEach(marker => {
+                    marker.setMap(null);
+                });
+                markers = []; // 배열 초기화
 
+                // 출발지 좌표 요청
                 getCoordinates(startLocation).then(startCoordinates => {
-                    getCoordinates(destinationLocation).then(destCoordinates => {
-                        const sx = startCoordinates.lng;
-                        const sy = startCoordinates.lat;
-                        const ex = destCoordinates.lng;
-                        const ey = destCoordinates.lat;
+                    // 목적지 좌표 요청
+                    return getCoordinates(destinationLocation).then(destCoordinates => {
+                        // 목적지 좌표가 유효할 때
+                        if (startCoordinates.lat && startCoordinates.lng && destCoordinates.lat && destCoordinates.lng) {
+                            // 출발지 마커 위치 업데이트
+                            startMarker.setPosition(new naver.maps.LatLng(startCoordinates.lat, startCoordinates.lng));
+                            startMarker.setMap(map); // 지도에 마커 추가
+                            markers.push(startMarker); // 시작 마커를 마커 배열에 추가
 
-                        const startMarker = addMarker(sy, sx, '출발지', 'img/start.png', 25);
-                        markers.push(startMarker);
+                            var stopMarker = addMarker(destCoordinates.lat, destCoordinates.lng, '목적지', '/img/stop.png', 30); // 목적지 마커 아이콘 변경
+                            stopMarker.setMap(map); // 목적지 마커 지도에 추가
+                            markers.push(stopMarker); // 목적지 마커를 마커 배열에 추가
 
-                        const stopMarker = addMarker(ey, ex, '목적지', 'img/stop.png', 30);
-                        markers.push(stopMarker);
+                            // 출발지와 목적지의 위치를 포함하는 경계 설정
+                            var bounds = new naver.maps.LatLngBounds();
+                            bounds.extend(startMarker.getPosition());
+                            bounds.extend(stopMarker.getPosition());
+                            map.fitBounds(bounds); // 경계에 맞춰 지도 자동 줌
 
-                        const bounds = new naver.maps.LatLngBounds();
-                        bounds.extend(startMarker.getPosition());
-                        bounds.extend(stopMarker.getPosition());
-                        map.fitBounds(bounds);
-
-                        searchPubTransPathAJAX(sx, sy, ex, ey);
-
-                        const button = document.getElementById('submitBtn');
-                        button.classList.add('clicked');
-                        setTimeout(() => {
-                            button.classList.remove('clicked');
-                        }, 300);
+                            // 버튼 클릭 시 귀여운 이펙트
+                            const button = document.getElementById('submitBtn');
+                            button.classList.add('clicked');
+                            setTimeout(() => {
+                                button.classList.remove('clicked');
+                            }, 300);
+                        }
                     });
                 }).catch(err => {
                     alert(err);
                 });
             }
 
-            function searchPubTransPathAJAX(sx, sy, ex, ey) {
-                var xhr = new XMLHttpRequest();
-                const url = `https://api.odsay.com/v1/api/searchPubTransPathT?SX=${sx}&SY=${sy}&EX=${ex}&EY=${ey}&apiKey=${odsayAPIKEY}`;
-                xhr.open("GET", url, true);
-                xhr.send();
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState == 4 && xhr.status == 200) {
-                        var response = JSON.parse(xhr.responseText);
-                        callMapObjApiAJAX(response.result.path[0].info.mapObj);
-                    }
-                }
-            }
-
-            function callMapObjApiAJAX(mapObj) {
-                var xhr = new XMLHttpRequest();
-                const url = `https://api.odsay.com/v1/api/loadLane?mapObject=0:0@${mapObj}&apiKey=${odsayAPIKEY}`;
-                xhr.open("GET", url, true);
-                xhr.send();
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState == 4 && xhr.status == 200) {
-                        var resultJsonData = JSON.parse(xhr.responseText);
-                        drawNaverPolyLine(resultJsonData);
-
-                        if (resultJsonData.result.boundary) {
-                            var boundary = new naver.maps.LatLngBounds(
-                                new naver.maps.LatLng(resultJsonData.result.boundary.top, resultJsonData.result.boundary.left),
-                                new naver.maps.LatLng(resultJsonData.result.boundary.bottom, resultJsonData.result.boundary.right)
-                            );
-                            map.panToBounds(boundary);
-                        }
-                    }
-                }
-            }
-
-            function drawNaverPolyLine(data) {
-                for (var i = 0; i < data.result.lane.length; i++) {
-                    for (var j = 0; j < data.result.lane[i].section.length; j++) {
-                        var lineArray = [];
-                        for (var k = 0; k < data.result.lane[i].section[j].graphPos.length; k++) {
-                            lineArray.push(new naver.maps.LatLng(data.result.lane[i].section[j].graphPos[k].y, data.result.lane[i].section[j].graphPos[k].x));
-                        }
-
-                        var strokeColor = '#000000';
-                        if (data.result.lane[i].type === 1) {
-                            strokeColor = '#003499';
-                        } else if (data.result.lane[i].type === 2) {
-                            strokeColor = '#37b42d';
-                        }
-
-                        new naver.maps.Polyline({
-                            map: map,
-                            path: lineArray,
-                            strokeWeight: 3,
-                            strokeColor: strokeColor
-                        });
-                    }
-                }
-            }
-
+            // 마커 추가 함수
             function addMarker(lat, lng, title, iconUrl, icoSize) {
-                return new naver.maps.Marker({
+                var marker = new naver.maps.Marker({
                     position: new naver.maps.LatLng(lat, lng),
-                    map: map,
+                    map: map, // 지도에 추가
                     title: title,
                     icon: {
-                        url: iconUrl || 'img/start.png',
-                        scaledSize: new naver.maps.Size(icoSize, icoSize)
+                        url: iconUrl || '/img/start.png', // 기본 아이콘 URL
+                        scaledSize: new naver.maps.Size(icoSize, icoSize) // 아이콘 크기 조정
                     }
                 });
+                return marker;
             }
 
+            // 주소를 좌표로 변환하는 함수
             async function getCoordinates(address) {
+                console.log('Searching for address:', address);
                 return new Promise((resolve, reject) => {
-                    naver.maps.Service.geocode({ query: address }, function(status, response) {
+                    naver.maps.Service.geocode({
+                        query: address
+                    }, function(status, response) {
                         if (status !== naver.maps.Service.Status.OK) {
                             return reject(`API 서버 에러! 상태: ${status}`);
                         }
                         const result = response.v2;
+                        console.log('Geocode result:', result);
                         if (result && result.addresses && result.addresses.length > 0) {
                             const firstAddress = result.addresses[0];
                             resolve({
@@ -178,15 +140,93 @@
             }
         }
 
+        // 페이지가 로드될 때 NAVER Maps API 로드
         window.onload = loadNaverMapsApi;
     </script>
     <style>
-        /* 스타일은 수정하지 않음 */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            text-align: center; /* 중앙 정렬 */
+        }
+
+        #map {
+            width: 300px;
+            height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            margin: 10px auto; /* 마진 자동으로 가운데 정렬 */
+        }
+
+        #controls {
+            margin: 20px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: inline-block; /* 중앙 정렬을 위해 inline-block 사용 */
+            position: relative; /* 버튼 위치를 조정하기 위해 상대 위치 지정 */
+        }
+
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-top: 5px;
+            border: 2px solid #0078ff;
+            border-radius: 5px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #0056b3;
+            outline: none;
+        }
+
+        button {
+            background-color: #0078ff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:active {
+            background-color: #003d7a;
+        }
+
+        /* 클릭 시 귀여운 이펙트 */
+        .clicked {
+            transform: scale(1.1); /* 버튼 크기 확대 */
+            transition: transform 0.2s ease; /* 부드러운 전환 */
+        }
+
+        /* 모바일 화면에서 입력란과 버튼의 크기 조정 */
+        @media (max-width: 768px) {
+            input[type="text"], button {
+                width: calc(100% - 22px);
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
 
-<div id="map"></div>
+<div id="map"></div> <!-- 지도를 입력란보다 위에 배치 -->
+
 <div id="controls">
     <label for="start">출발지:</label>
     <input type="text" id="start" placeholder="출발지 입력"><br>
@@ -197,3 +237,5 @@
 
 </body>
 </html>
+
+
