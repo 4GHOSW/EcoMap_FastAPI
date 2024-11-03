@@ -85,7 +85,7 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
                         "part_time": jtem["sectionTime"] / 60 / 60,
                         "path": path,
                         "velocity": velocity,
-                        "CO2": jtem["distance"] / 1000 * 5054.5880 * velocity ** (-0.4910)
+                        "CO2": 0,
                     })
                     totTime += jtem["sectionTime"] / 60 / 60
             totTimes.append(totTime)
