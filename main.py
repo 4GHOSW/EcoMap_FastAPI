@@ -37,16 +37,8 @@ async def get_carbon_routes(sx: float, sy: float, ex: float, ey: float, apiKey: 
     response = requests.post(url, json=payload, headers=headers)
     
     try:
-        pre_result = response.json()["metaData"]["plan"]
-        result = []
-        for item in pre_result["itineraries"]:
-            buf = dict()
-            buf["fare"] = item["fare"]["regular"]["totalFare"] + item["fare"]["regular"]["currency"]["currency"]
-            buf["totalTime"] = item["totalTime"]
-            buf["path"] = item["legs"]
-            result.append(buf)
-
-        return response.json()
+        result = response.json()["metaData"]["plan"]["itineraries"]
+        return result
     except Exception:
         return {"status": 500, "message": "SKT API Server Error"}
 
