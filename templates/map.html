@@ -20,11 +20,21 @@
     
         function loadNaverMapsApi() {
             const script = document.createElement('script');
-            script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${clientId}&submodules=geocoder`;
+            script.src = `https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${clientId}&submodules=geocoder`;
             script.async = true;
-            script.onload = initMap;
+
+            script.onload = function() {
+                // Naver Maps API가 로드된 후 initMap을 호출
+                initMap();
+            };
+
+            script.onerror = function() {
+                alert('Naver Maps API를 로드하는 데 실패했습니다.');
+            };
+
             document.head.appendChild(script);
         }
+
     
         let markers = [];
     
